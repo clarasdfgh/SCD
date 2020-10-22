@@ -12,17 +12,11 @@ using namespace SEM ;
 //**********************************************************************
 // variables compartidas
 
-const int num_items = 40 ,   // número de items
-	        tam_vec   = 10 ;   // tamaño del buffer
+const int num_items = 3;
 
-unsigned  cont_prod[num_items] = {0}, // contadores de verificación: producidos
-          cont_cons[num_items] = {0}; // contadores de verificación: consumidos
+Semaphore mostrador = 1;
+std::vector<Semaphore> fumador;
 
-Semaphore escritura = tam_vec,
-					lectura   = 0;
-
-int 		  buffer[tam_vec];
-int				n = 0;
 
 mutex 		mtx;
 
@@ -55,7 +49,7 @@ int producir_ingrediente()
    // espera bloqueada un tiempo igual a ''duracion_produ' milisegundos
    this_thread::sleep_for( duracion_produ );
 
-   const int num_ingrediente = aleatorio<0,num_fumadores-1>() ;
+   const int num_ingrediente = aleatorio<0,num_items-1>() ;
 
    // informa de que ha terminado de producir
    cout << "Estanquero : termina de producir ingrediente " << num_ingrediente << endl;
@@ -68,7 +62,16 @@ int producir_ingrediente()
 
 void funcion_hebra_estanquero(  )
 {
-    //TODO
+    while( true ){
+      sem_wait( mostrador );
+        int i = producir_ingrediente();
+
+        mtx.lock();
+        cout << "Estanquero : ingrediente " << i << " puesto en el mostrador" << endl;
+        mtx.unlock();
+
+      sem_signal( fumador[i] );
+    }
 }
 
 //-------------------------------------------------------------------------
@@ -100,7 +103,15 @@ void  funcion_hebra_fumador( int num_fumador )
 {
    while( true )
    {
-  //TODO
+     sem_wait( fumador[num_fumador] );
+
+     mtx.lock();
+     cout << "Fumador " << num_fumador << "  : toma ingrediente del mostrador" << endl;
+     mtx.unlock();
+
+     sem_signal( mostrador );
+
+     fumar(num_fumador);
    }
 }
 
@@ -108,7 +119,31 @@ void  funcion_hebra_fumador( int num_fumador )
 
 int main()
 {
-   // declarar hebras y ponerlas en marcha
-   // ......
-   //TODO
+  cout << "---------------------------" << endl
+       << " Problema de los fumadores " << endl
+       << "---------------------------" << endl
+       << flush ;
+
+
+  for (int i = 0; i < num_items; i++){
+    fumador.push_back(0);
+  }
+
+  thread estanquero;
+  thread fumadores[num_items];
+
+  for (int i = 0; i < num_items; i++){
+    fumadores[i] = thread (funcion_hebra_fumador, i);
+  }
+
+    estanquero = thread (funcion_hebra_estanquero);
+
+
+  for (int i = 0; i < num_items; i++){
+    fumadores[i].join();
+  }
+
+    estanquero.join();
+
+  cout << endl << endl;
 }
