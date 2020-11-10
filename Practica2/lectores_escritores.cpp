@@ -14,8 +14,8 @@ using namespace HM;
 //**********************************************************************
 // variables compartidas
 
-const int num_lectores   = 3,
-          num_escritores = 3;
+const int num_lectores   = 4,
+          num_escritores = 4;
 
 mutex	mtx;  //Mutex para la salida por pantalla
 
@@ -97,15 +97,26 @@ void Lect_escr::ini_escritura( ){
 void Lect_escr::fin_escritura( ){
   escrib = false;
 
-  if (lectura.get_nwt() != 0){    //Función de CondVar que comprueba cuántas hebras hay esperando en ella
+  if(escritura.get_nwt() > 0 && n_lec >= 3){
+    if(n_lec > 3){
+      escritura.signal();
+    } else{
+      lectura.signal();
+    }
+  } else{
+    lectura.signal();
+  }
+
+  /*if (lectura.get_nwt() != 0) //Función de CondVar que comprueba cuántas hebras hay esperando en ella
+  {
     lectura.signal();
   } else{
     escritura.signal();
-  }
+  }*/
 }
 
 
-//-------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Función que simula la acción de escribir, como un retardo
 // aleatorio de la hebra
 
@@ -128,13 +139,13 @@ void escribir( int n_escritor )
    mtx.unlock();
 }
 
-//----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Función que ejecuta la hebra del escritor
 
 void funcion_hebra_escritor( MRef<Lect_escr> monitor, int n_escritor )
 {
     while( true ){
-      chrono::milliseconds espera( aleatorio<10,90>() );
+      chrono::milliseconds espera( aleatorio<10,100>() );
       this_thread::sleep_for( espera );
 
       monitor->ini_escritura();
@@ -143,7 +154,7 @@ void funcion_hebra_escritor( MRef<Lect_escr> monitor, int n_escritor )
     }
 }
 
-//-------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Función que simula la acción de leer, como un retardo
 // aleatorio de la hebra
 
@@ -167,14 +178,14 @@ void leer( int n_lector )
 }
 
 
-//----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Función que ejecuta la hebra del lector
 
 void  funcion_hebra_lector( MRef<Lect_escr> monitor, int n_lector )
 {
    while( true )
    {
-     chrono::milliseconds espera( aleatorio<90,200>() );
+     chrono::milliseconds espera( aleatorio<10,100>() );
      this_thread::sleep_for( espera );
 
      monitor->ini_lectura();
@@ -183,7 +194,7 @@ void  funcion_hebra_lector( MRef<Lect_escr> monitor, int n_lector )
    }
 }
 
-//----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 int main()
 {
