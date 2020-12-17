@@ -24,14 +24,21 @@ using namespace std::this_thread ;
 using namespace std::chrono ;
 
 const int
-   id_productor          = 0 ,
-   id_buffer             = 1 ,
-   id_consumidor         = 2 ,
-   num_procesos_esperado = 3 ,
-   num_items             = 20,
-   num_prod              = 4 ,
    num_cons              = 5 ,
+   num_prod              = 4 ;
+
+const int
+   id_buffer             = num_prod ,
+   tag_prod              = 0 ,
+   tag_cons              = 1 ,
+   num_procesos_esperado = 10,
+   num_items             = 20,
    tam_vector            = 10;
+
+const int
+   consumen              = num_items / num_prod,
+   producen              = num_items / num_cons;
+
 
 //**********************************************************************
 // plantilla de función para generar un entero aleatorio uniformemente
@@ -45,30 +52,39 @@ template< int min, int max > int aleatorio()
   static uniform_int_distribution<int> distribucion_uniforme( min, max ) ;
   return distribucion_uniforme( generador );
 }
+
 // ---------------------------------------------------------------------
-// ptoducir produce los numeros en secuencia (1,2,3,....)
+// producir produce los numeros en secuencia (1,2,3,....)
 // y lleva espera aleatorio
-int producir()
+//----------------------------------------------------------------------
+
+int producir(int id_prod)
 {
    static int contador = 0 ;
+   int produccion = id_prod * producen + contador;
+
    sleep_for( milliseconds( aleatorio<10,100>()) );
    contador++ ;
-   cout << "Productor ha producido valor " << contador << endl << flush;
-   return contador ;
+
+   cout << "Productor " << id_prod << " ha producido el valor " << produccion << endl << flush;
+   return produccion ;
 }
+
 // ---------------------------------------------------------------------
 
-void funcion_productor()
+void funcion_productor(int id_prod)
 {
-   for ( unsigned int i= 0 ; i < num_items ; i++ )
+   for ( unsigned int i= 0 ; i < producen ; i++ )
    {
       // producir valor
-      int valor_prod = producir();
+      int valor_prod = producir(id_prod);
       // enviar valor
-      cout << "Productor va a enviar valor " << valor_prod << endl << flush;
-      MPI_Ssend( &valor_prod, 1, MPI_INT, id_buffer, 0, MPI_COMM_WORLD );
+      cout <<  "Productor " << id_prod << " va a enviar valor " << valor_prod << endl << flush;
+      MPI_Ssend( &valor_prod, 1, MPI_INT, id_buffer, tag_prod, MPI_COMM_WORLD );
    }
 }
+
+// ---------------------------------------------------------------------
 // ---------------------------------------------------------------------
 
 void consumir( int valor_cons )
@@ -77,22 +93,25 @@ void consumir( int valor_cons )
    sleep_for( milliseconds( aleatorio<110,200>()) );
    cout << "Consumidor ha consumido valor " << valor_cons << endl << flush ;
 }
+
 // ---------------------------------------------------------------------
 
-void funcion_consumidor()
+void funcion_consumidor(int id_cons)
 {
-   int         peticion,
+   int         peticion ,
                valor_rec = 1 ;
    MPI_Status  estado ;
 
-   for( unsigned int i=0 ; i < num_items; i++ )
+   for( unsigned int i=0 ; i < consumen; i++ )
    {
-      MPI_Ssend( &peticion,  1, MPI_INT, id_buffer, 0, MPI_COMM_WORLD);
-      MPI_Recv ( &valor_rec, 1, MPI_INT, id_buffer, 0, MPI_COMM_WORLD,&estado );
-      cout << "Consumidor ha recibido valor " << valor_rec << endl << flush ;
+      MPI_Ssend( &peticion,  1, MPI_INT, id_buffer, tag_cons, MPI_COMM_WORLD);
+      MPI_Recv ( &valor_rec, 1, MPI_INT, id_buffer, tag_cons, MPI_COMM_WORLD, &estado );
+      cout << "Consumidor " << id_cons << " ha recibido valor " << valor_rec << endl << flush ;
       consumir( valor_rec );
    }
 }
+
+// ---------------------------------------------------------------------
 // ---------------------------------------------------------------------
 
 void funcion_buffer()
@@ -110,33 +129,33 @@ void funcion_buffer()
       // 1. determinar si puede enviar solo prod., solo cons, o todos
 
       if ( num_celdas_ocupadas == 0 )               // si buffer vacío
-         id_emisor_aceptable = id_productor ;       // $~~~$ solo prod.
+         id_emisor_aceptable = tag_prod ;       // $~~~$ solo prod.
       else if ( num_celdas_ocupadas == tam_vector ) // si buffer lleno
-         id_emisor_aceptable = id_consumidor ;      // $~~~$ solo cons.
+         id_emisor_aceptable = tag_cons ;      // $~~~$ solo cons.
       else                                          // si no vacío ni lleno
-         id_emisor_aceptable = MPI_ANY_SOURCE ;     // $~~~$ cualquiera
+         id_emisor_aceptable = MPI_ANY_TAG ;     // $~~~$ cualquiera
 
       // 2. recibir un mensaje del emisor o emisores aceptables
 
-      MPI_Recv( &valor, 1, MPI_INT, id_emisor_aceptable, 0, MPI_COMM_WORLD, &estado );
+      MPI_Recv( &valor, 1, MPI_INT, MPI_ANY_SOURCE, id_emisor_aceptable, MPI_COMM_WORLD, &estado );
 
       // 3. procesar el mensaje recibido
 
-      switch( estado.MPI_SOURCE ) // leer emisor del mensaje en metadatos
+      switch( estado.MPI_TAG ) // leer emisor del mensaje en metadatos
       {
-         case id_productor: // si ha sido el productor: insertar en buffer
+         case tag_prod: // si ha sido el productor: insertar en buffer
             buffer[primera_libre] = valor ;
             primera_libre = (primera_libre+1) % tam_vector ;
             num_celdas_ocupadas++ ;
             cout << "Buffer ha recibido valor " << valor << endl ;
             break;
 
-         case id_consumidor: // si ha sido el consumidor: extraer y enviarle
+         case tag_cons: // si ha sido el consumidor: extraer y enviarle
             valor = buffer[primera_ocupada] ;
             primera_ocupada = (primera_ocupada+1) % tam_vector ;
             num_celdas_ocupadas-- ;
             cout << "Buffer va a enviar valor " << valor << endl ;
-            MPI_Ssend( &valor, 1, MPI_INT, id_consumidor, 0, MPI_COMM_WORLD);
+            MPI_Ssend( &valor, 1, MPI_INT, estado.MPI_SOURCE, tag_cons, MPI_COMM_WORLD);
             break;
       }
    }
@@ -156,12 +175,12 @@ int main( int argc, char *argv[] )
    if ( num_procesos_esperado == num_procesos_actual )
    {
       // ejecutar la operación apropiada a 'id_propio'
-      if ( id_propio == id_productor )
-         funcion_productor();
+      if ( id_propio < id_buffer )
+         funcion_productor(id_propio);
       else if ( id_propio == id_buffer )
          funcion_buffer();
       else
-         funcion_consumidor();
+         funcion_consumidor(id_propio);
    }
    else
    {

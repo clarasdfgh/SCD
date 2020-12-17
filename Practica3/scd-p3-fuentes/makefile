@@ -10,8 +10,8 @@ pc: prodcons_exe
 pc2: prodcons2_exe
 	mpirun -np  3 ./$<
 
-pcm: prodcons-multiple_exe
-	mpirun -np  10 ./$<
+pcm: prodcons2-mu_exe
+	mpirun -hostfile hostfile -np  10 ./$<
 
 fp: filosofos-plantilla_exe
 	mpirun -np 10 ./$<
