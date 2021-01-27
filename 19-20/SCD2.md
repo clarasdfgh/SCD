@@ -12,8 +12,8 @@
 
 En este tema estudiaremos soluciones de exclusión mutua y sincronización basadas en el uso de memoria compartida entre los procesos involucrados. Estas soluciones se dividen dos categorías:
 
--  Soluciones de bajo nivel con espera ocupada con bucles para realizar las esperas
--  Soluciones de alto nivel que parten de las anteriores. La sincronización se consigue bloqueando el proceso que tenga que esperar
+-  Soluciones de bajo nivel con espera ocupada, con bucles para realizar las esperas
+-  Soluciones de alto nivel, que parten de las anteriores. La sincronización se consigue bloqueando el proceso que tenga que esperar
    -  Semáforos
    -  Regiones críticas
    -  Monitores
@@ -191,9 +191,17 @@ end
 >>//EJEMPLO DE USO
 >>monitor : VarCompartida;
 >>.......;
->>
+>>```
+>
 >>monitor.incremento();
 >>k := monitor.valor();
+>
+>>```
+>>
+>>```
+>
+>>```
+>>
 >>```
 
 #### Funcionamiento 

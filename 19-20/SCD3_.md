@@ -399,7 +399,7 @@ Sin embargo, con las primitivas vistas, no es posible cumplir estos requisitos u
 
 ## 2. Paradigmas de interacción de procesos en programas distribuidos
 
-**Paradigma de interacción:** define un esquema de interacción entre procesos y una estructura de control que aparece en muchos programas. Unos pocos paradigmas se utilizan repetidamente para desarrollar muchos programas distribuídos.
+**Paradigma de interacción:** define un esquema de interacción entre procesos y una estructura de control que aparece en muchos programas. Unos pocos paradigmas se utilizan repetidamente para desarrollar muchos programas distribuidos.
 
 - Maestro-esclavo
 - Iteración síncrona

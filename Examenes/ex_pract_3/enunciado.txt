@@ -1,0 +1,17 @@
+ Modifica tu solución del ejercicio de los productores-consumidores con 4 productores y 5 consumidores de la práctica 3 para que se cumpla lo siguiente:
+
+1. Solo existirá 1 proceso productor y 2 procesos consumidores, el productor producirá 6 elementos y el buffer tendrá tamaño 2. La estrategia de gestión del buffer será FIFO.
+
+2. El proceso buffer tendrá dos modos de funcionamiento diferentes que se van alternando en función de las circunstancias:
+
+a) Modo 0: Inicialmente el proceso buffer está en modo 0. En este modo, el proceso buffer atenderá mensajes del consumidor 0 o del productor dependiendo del estado del array local (si está vacío solo atenderá al productor, si está lleno al consumidor 0 y, en otro caso, a uno cualquiera de ellos). 
+
+Por tanto, el buffer siempre ignorará al consumidor 1 en Modo 0. Si el proceso buffer está en modo 0 y recibe un mensaje del  consumidor 0, el proceso buffer pasará a Modo 1. Téngase en cuenta que el consumidor 0 tendrá rango 2  en MPI_COMM_WORLD  y el consumidor 1 tendrá rango 3.
+
+b) Modo 1: En este modo, el proceso buffer atiende también mensajes en función del estado del array local, pero solo se reciben, para el caso de los consumidores, aquellos mensajes emitidos por el consumidor 1 (siempre ignorará al consumidor 0 en Modo 1). Una vez se atiende un mensaje del consumidor 1 en el Modo 1, el proceso buffer pasa al Modo 0.
+
+En cualquiera de los modos, cuando se puedan recibir mensajes tanto de un productor como de un consumidor (buffer ni lleno ni vacío), se sondeará primero si hay mensaje del productor y después, si no hay éxito, se sondeará al consumidor compatible. Este chequeo se repetirá hasta que se tenga éxito en la detección. Al finalizar ese bucle de sondeo, se recibirá el mensaje entrante detectado y se modificará el estado del buffer (y el modo si procede) consecuentemente.
+
+Cuando el proceso buffer se encuentre en Modo i (i=0 ó 1) y atienda un mensaje del productor en una iteración, permanecerá en el Modo i en la siguiente iteración (los mensajes recibidos del productor no cambian el modo).
+
+ENTREGA: El archivo con el programa C++ modificado, que debe llamarse “practica3.cpp” debe ser subido a través de la Actividad “Control de Evaluación Práctica 3. Grupo A1” definida en la plataforma PRADO.

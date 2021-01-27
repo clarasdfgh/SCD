@@ -175,12 +175,12 @@ Los tipos de esquema de planificación en un sistema monoprocesador son los sigu
 La planificación se basa en diseñar un programa (ejecutivo cíclico) que implementa un plan de ejecución (plan principal), que garantice los requerimientos temporales:
 
 - El programa es un bucle infinito tal que cada iteración tiene una duración prefijada, siempre igual. El bucle es el ciclo principal
-- En cada iteración del bucle principal se ejecuta otro bucle acotado con k iteraciones (k cte.). Cada iteració dura siempre lo mismo y en ella se ejecutan completamente una o varias tareas. A este bucle interno (acotado) se le denomina ciclo secundario
+- En cada iteración del bucle principal se ejecuta otro bucle acotado con k iteraciones (k cte.). Cada iteración dura siempre lo mismo y en ella se ejecutan completamente una o varias tareas. A este bucle interno (acotado) se le denomina ciclo secundario
 - El entrelazado de las tareas en cada iteración del ciclo principal es siempre el mismo. Una iteración número i del ciclo secundario puede tener un entrelazado distintos a otra iteración número j (i,j 1..k)
 
 Las duraciones de ambos ciclos son valores enteros (se supone que el tiempo se mide en múltiplos enteros de alguna unidad de tiempo)
 
-- La duración del ciclo principal se denomina **hiperperiodo (Tm)**. Es el mínimo común múltiplo de los periodos de todas las tareas, por tanto, los instantes de inicio de cada iteración del ciclo principal coinciden con los instantes en los cuales todas las tareas se activan de nuevo a la vez
+- La duración del ciclo principal se denomina **hiperperiodo (Tm): mínimo común múltiplo de los periodos de todas las tareas**, por tanto, los instantes de inicio de cada iteración del ciclo principal coinciden con los instantes en los cuales todas las tareas se activan de nuevo a la vez
 - La duración del ciclo secundario se denomina Ts. Lógicamente, se debe cumplir **Tm = k \* Ts**  
 
 #### Ejemplo e implementación
@@ -291,22 +291,22 @@ Los test de planificabilidad determinan si el conjunto de tareas es planificable
 
 - **Test de planificabilidad suficientes:**
   - En caso de éxito el sistema es planificable
-  - En caso contrario nos falta información: podría ser planificable o no
+  - En caso contrario *nos falta información*: podría ser planificable o no
 - **Test de planificabilidad exactos:** (suficiente y necesario)
   - En caso de éxito el sistema es planificable
-  - En caso contrario no es planificable, dará error (no se cumplirá algún deadline)
+  - En caso contrario *no es planificable*, dará error (no se cumplirá algún deadline)
 
 ##### Test de Liu & Layland
 
-Es un test de planificabilidad suficiente, se aplica para un sistema de **n tareas** periódicas independientes con prioridad RMS
+Es un test de planificabilidad **suficiente**, se aplica para un sistema de **n tareas** periódicas independientes con prioridad RMS
 
 - Se usa el factor de utilización U y el factor de utilización máximo (U0n)
   - U = sumatorio\[i=1..n] (Ci/Ti)
   - U0n = n *  (raíz n-ésima(2) - 1)
 - El valor de U0(1) es 1. A partir de ahí decrece según crece n, hasta el límite que es ln2
-- Un sistema pasa el test si U <= U0n. En caso contrario, no podemos confirmar nada y recurrimos a mirar el cronograma
+- Un sistema **pasa el test si U <= U0n**. En caso contrario, no podemos confirmar nada y recurrimos a mirar el cronograma
 
-#### Planificación EDF (Earliest Deadline First)
+#### Planificación EDF: *Earliest Deadline First*
 
 Es un esquema de planificación con prioridades dinámicas. El primero el más urgente, aquel cuya deadline está más cerca
 
@@ -316,7 +316,8 @@ Es un esquema de planificación con prioridades dinámicas. El primero el más u
 
 ##### Test de planificabilidad
 
-En este caso el test Liu&Layland se puede aplicar también, y se convierte en un test exacto: si pasa el test es planificable; si no, no.
+En este caso **el test Liu&Layland se puede aplicar también, y se convierte en un test exacto**: si pasa el test es planificable; si no, no.
 
-- En este caso el sistema pasa el test si U <= 1
+- En este caso el sistema **pasa el test si U <= 1**
 - Esto implica que la planificación EDF puede aplicarse a más sistemas que la RMS (ya que la U0n siempre es menor que 1 en RMS)  
+
